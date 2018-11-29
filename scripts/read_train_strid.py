@@ -3,6 +3,7 @@ import sys
 import os
 import pandas as pd
 import numpy as np
+import math
 
 
 def main():
@@ -25,7 +26,8 @@ def main():
     dirs = [d for d in os.listdir(INPUT_DIR) if os.path.isdir("%s/%s" % (INPUT_DIR, d))]
  
     # Get list of all classes
-    classes = ['liquid','fcc','hcp','bcc']
+    #classes = ['liquid','fcc','hcp','bcc']
+    classes = ['liq','ice-h','ice-c','ice-III','ice-V','ice-VI']
    
     # Get all files
     files = ["%s/crds-neigh.out" % d for d in dirs]
@@ -34,6 +36,11 @@ def main():
     samples = []
     labels = []
 
+    # Initialize values for mean/stdev of nneigh
+    count = 0
+    mean = 0
+    m2 = 0
+
     # Read in data for each file
     fcount = 0
     for f in files:
@@ -41,7 +48,7 @@ def main():
         # Progress
         print("Reading file: %d" % fcount)
         # Extract classid and create label
-        classid = f.split("-")[0]
+        classid = f.split("_")[0]
         ndx = classes.index(classid)
         label = np.zeros(len(classes))
         label[ndx] = 1
@@ -52,8 +59,14 @@ def main():
         for name,group in df.groupby(['frame','atomid']):
             # Extract values
             vals = group.values[:,2:]
-            # Zero padding
             nneigh = vals.shape[0]
+            # Calc avg/stdev of nneigh with Welford Alg.
+            count += 1
+            delta = nneigh - mean
+            mean += delta/count
+            delta2 = nneigh - mean
+            m2 += delta*delta2
+            # Zero padding
             if nneigh > nmax:
                 sample = np.resize(vals,(nmax,3))
             elif nneigh < nmax:
@@ -73,6 +86,11 @@ def main():
     # save output files
     np.save(OUTPUT_NAME + '_samples.npy', np_samples)
     np.save(OUTPUT_NAME + '_labels.npy', np_labels)
+
+    # Finalize and print avg/stdev nneigh
+    print("Mean nneigh: %f" % mean)
+    print("Stdev nneigh: %f" % ((math.sqrt(m2/count))))
+
 
 # Boilerplate notation to run main fxn
 if __name__ == "__main__":
