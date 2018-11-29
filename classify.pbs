@@ -1,0 +1,8 @@
+#PBS -N classifyICE
+#PBS -l select=1:ncpus=4:ngpus=2:mem=32gb:gpu_model=p100,walltime=24:00:00
+
+cd /home/$USER/ml-tools
+source activate tensorflow
+
+python scripts/run_net.py --dataset ./data/pc-r2.0/pc-r2.0_samples.npy --labels ./data/pc-r2.0/pc-r2.0_labels.npy --net pc
+
