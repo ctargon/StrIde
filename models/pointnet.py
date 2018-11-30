@@ -123,7 +123,7 @@ class PointNet:
 
         return rotated_data
 
-    def random_scale(self, batch_data, dist='normal'):
+    def random_scale_sample_wise(self, batch_data, dist='normal'):
         if dist == 'normal':
             rands = np.random.normal(1, 0.1, size=(batch_data.shape[0], 1, 1))
         elif dist == 'uniform':
@@ -175,7 +175,7 @@ class PointNet:
             for i in range(total_batch):
                 batch_x, batch_y = dataset.train.next_batch(self.batch_size, i)
                 batch_x = self.rotate_point_cloud(batch_x)
-                batch_x = self.random_scale(batch_x)
+                batch_x = self.random_scale_sample_wise(batch_x)
                 _, c = sess.run([optimizer, loss], feed_dict={pc_pl: batch_x, 
                                                               y_pl: batch_y,
                                                               is_training_pl: is_training})
@@ -247,7 +247,7 @@ class PointNet:
 
         return sum(accs) / float(len(accs))
        
-    def infer_nolabel(self,dataset):
+    def infer_nolabel(self, dataset):
 
         tf.reset_default_graph()
         pc_pl = tf.placeholder(tf.float32, [None, self.n_points, self.n_input])

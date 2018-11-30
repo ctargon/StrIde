@@ -36,6 +36,7 @@ if __name__ == '__main__':
 
 	print('loading numpy data...')
 	data = np.load(args.dataset)
+	#data = data[:,:,2:]
 	labels = np.load(args.labels)
 
 	print('converting to DataContainer format...')
