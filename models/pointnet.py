@@ -126,7 +126,7 @@ class PointNet:
 
         return rotated_data
 
-    def random_scale(self, batch_data):
+    def random_scale_sample_wise(self, batch_data):
         if self.noise == 'normal':
             rands = np.random.normal(self.params[0], self.params[1], size=(batch_data.shape[0], 1, 1))
         elif self.noise == 'uniform':
@@ -135,6 +135,13 @@ class PointNet:
             return batch_data
 
         return batch_data * rands
+
+    def random_scale_point_wise(self, batch_data):
+        rands = np.random.normal(self.params[0], self.params[1], size=batch_data.shape)
+
+        # add gaussian noise pointwise rather than multiplying
+        return batch_data + rands
+
 
     # method to run the training/evaluation of the model
     def run(self, dataset):
