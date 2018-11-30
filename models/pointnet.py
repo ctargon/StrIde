@@ -14,7 +14,8 @@ import tf_util
 class PointNet:
     def __init__(self, lr=0.001, epochs=75, \
         batch_size=16, disp_step=1, n_points=25, n_input=3, \
-        n_classes=4, dropout=0, load=0, save=0, verbose=0,
+        n_classes=4, dropout=0, load=0, save=0, verbose=0, \
+        noise='normal', params=[1.0, 0.1], \
         weights_file='/scratch3/ctargon/weights/r2.0/r2'):
 
         self.lr = lr
@@ -28,6 +29,8 @@ class PointNet:
         self.save = save
         self.dropout = dropout
         self.verbose = verbose
+        self.noise = noise
+        self.params = params
         self.weights_file = weights_file
 
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
@@ -123,11 +126,11 @@ class PointNet:
 
         return rotated_data
 
-    def random_scale_sample_wise(self, batch_data, dist='normal'):
-        if dist == 'normal':
-            rands = np.random.normal(1, 0.1, size=(batch_data.shape[0], 1, 1))
-        elif dist == 'uniform':
-            rands = np.random.uniform(0.9, 1.1, size=(batch_data.shape[0], 1, 1))
+    def random_scale(self, batch_data):
+        if self.noise == 'normal':
+            rands = np.random.normal(self.params[0], self.params[1], size=(batch_data.shape[0], 1, 1))
+        elif self.noise == 'uniform':
+            rands = np.random.uniform(self.params[0], self.params[1], size=(batch_data.shape[0], 1, 1))
         else:
             return batch_data
 

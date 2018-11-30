@@ -30,9 +30,17 @@ if __name__ == '__main__':
 	parser.add_argument('--labels', help='labels corresponding to dataset (numpy format)', type=str, required=True)
 	parser.add_argument('--net', help='which type of network to run (mlp/cnn)', type=str, required=False, \
 									choices=['mlp', 'cnn', 'pc'], default='mlp')
-	parser.add_argument('--n_points', help='number of points to use from original dataset', type=int, required=False, default=25)
+	parser.add_argument('--weights', help='folder to save weights to', type=str, required=True)
+	parser.add_argument('--noise', help='type of noise to input', type=str, required=True, default='normal')
+	parser.add_argument('--p1', help='param 1 for noise (mu if normal, lower bound if uniform)', type=float, required=True)
+	parser.add_argument('--p2', help='param 2 for noise (sigma if normal, upper bound if uniform)', type=float, required=True)
+
 
 	args = parser.parse_args()
+
+	if not os.path.exists(args.weights):
+		print('creating weight directory ' + str(args.weights))
+		os.makedirs(args.weights)
 
 	print('loading numpy data...')
 	data = np.load(args.dataset)
@@ -41,10 +49,6 @@ if __name__ == '__main__':
 
 	print('converting to DataContainer format...')
 	dc = DC(data=data, labels=labels)
-
-	# trim distance matrices for experiments
-	#dc.train.data = dc.train.data[:,:args.n_points,:]
-	#dc.test.data = dc.test.data[:,:args.n_points,:]
 
 	if args.net == 'mlp':
 		# dc.train.data = dc.train.data.reshape(dc.train.data.shape[0], -1)
@@ -65,14 +69,16 @@ if __name__ == '__main__':
 				  verbose=1)
 
 	if args.net == 'pc':
-		net = PointNet(epochs=50,
+		net = PointNet(epochs=100,
 					   batch_size=64,
 					   n_points=dc.train.data.shape[1],
 					   n_classes=dc.train.labels.shape[-1],
 					   n_input=3, 
 					   verbose=1,
 					   save=1,
-                       weights_file='/scratch3/ctargon/weights/r2.0/r2')
+					   noise=args.noise,
+					   params=[args.p1, args.p2],
+                       weights_file=args.weights)
 
 
 	print('train shape: ' + str(dc.train.data.shape))

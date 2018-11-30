@@ -1,40 +1,24 @@
-# ml-tools
+# StrIde
 
-This repository is a collection of command-line tools for data analysis and visualization. These tools essentially form a thin interface around several commonly-used Python packages for data science and machine learning.
+This repository is contains an application of a PointNet to identify crystal structures in molecular simulations. See original paper (https://arxiv.org/abs/1612.00593) and repository (https://github.com/charlesq34/pointnet).
 
 ## Installation
 
 This tool depends on several Python packages, all of which can be easily installed in an Anaconda environment:
 ```bash
-conda install matplotlib numpy pandas scikit-learn seaborn tensorflow-gpu==1.7.0
+conda install numpy pandas scikit-learn tensorflow-gpu==1.7.0
 ```
 
 ## Usage
 
-There are four primary scripts:
+There are three primary scripts:
 
-1. `classify.py`: classification algorithms
-2. `cluster.py`: clustering algorithms
-3. `regress.py`: regression algorithms
-4. `visualize.py`: data visualization
+1. `run_pointnet.py`: Trains the point net
+2. `run_infer.py`: Runs inference (w/ labels)
+3. `run_infer_nolabel.py`: Runs inference (w/o labels)
 
-Each script takes two inputs: (1) a tab-delimited data matrix and (2) a JSON configuration file. The data matrix is read as a pandas DataFrame; it should contain row-wise samples and should include both features and outputs. The JSON config file should specify numerical features, categorical features, and outputs. The following example could be for a dataset of housing prices:
-```json
-{
-   "numerical": [
-      "age",
-      "area",
-   ],
-   "categorical": [
-      "state",
-      "zip",
-      "color",
-      "foreclosed"
-   ],
-   "output": [
-      "price"
-   ]
-}
-```
+and two scripts to help read/format inputs:
 
-The `create-config.py` script can generate a basic config file from any tab-delimited data file, but you will likely need to modify it to suit your particular needs.
+1. `read_train.py`: Reads/formats training data into numpy arrays
+2. `read_test_nolabel.py`: Reads/formats data w/o labels and preserves frame id/atom id
+
