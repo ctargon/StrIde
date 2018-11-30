@@ -78,7 +78,7 @@ if __name__ == '__main__':
 					   save=1,
 					   noise=args.noise,
 					   params=[args.p1, args.p2],
-                       weights_file=args.weights)
+                       weights_dir=args.weights)
 
 
 	print('train shape: ' + str(dc.train.data.shape))

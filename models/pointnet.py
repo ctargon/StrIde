@@ -16,7 +16,7 @@ class PointNet:
         batch_size=16, disp_step=1, n_points=25, n_input=3, \
         n_classes=4, dropout=0, load=0, save=0, verbose=0, \
         noise='normal', params=[1.0, 0.1], \
-        weights_file='/scratch3/ctargon/weights/r2.0/r2'):
+        weights_dir='/scratch3/ctargon/weights/r2.0/r2'):
 
         self.lr = lr
         self.epochs = epochs
@@ -31,7 +31,7 @@ class PointNet:
         self.verbose = verbose
         self.noise = noise
         self.params = params
-        self.weights_file = weights_file
+        self.weights_file = weights_dir + '/model'
 
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 

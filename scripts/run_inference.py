@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
 	ic = IC(data=d, labels=l)
 
-	pc = PointNet(n_points=ic.test.data.shape[1], weights_file=args.weights)
+	pc = PointNet(n_points=ic.test.data.shape[1], weights_dir=args.weights)
 
 	acc = pc.inference(ic)
 	print('inference accuracy: ' + str(acc))
