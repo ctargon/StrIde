@@ -19,6 +19,6 @@ There are three primary scripts:
 
 and two scripts to help read/format inputs:
 
-1. `read_train.py`: Formats training data into numpy arrays
-2. `read_test_nolabel.py`: Reads data w/o labels and preserves frame id/atom id
+1. `read_train.py`: Reads/formats training data into numpy arrays
+2. `read_test_nolabel.py`: Reads/formats data w/o labels and preserves frame id/atom id
 
