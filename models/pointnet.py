@@ -185,7 +185,7 @@ class PointNet:
             for i in range(total_batch):
                 batch_x, batch_y = dataset.train.next_batch(self.batch_size, i)
                 batch_x = self.rotate_point_cloud(batch_x)
-                batch_x = self.random_scale(batch_x)
+                batch_x = self.random_scale_point_wise(batch_x)
                 _, c = sess.run([optimizer, loss], feed_dict={pc_pl: batch_x, 
                                                               y_pl: batch_y,
                                                               is_training_pl: is_training})
