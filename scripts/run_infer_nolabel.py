@@ -7,7 +7,7 @@ import argparse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../'))
 
 from models.pointnet import PointNet
 
@@ -31,16 +31,16 @@ if __name__ == '__main__':
     # Extract just atom/frids
     ids = d[:,0,:2]
 
-    pc = PointNet(n_points=npoints, weights_file=args.weights)
+    pc = PointNet(n_points=npoints, weights_dir=args.weights)
 
     result = pc.infer_nolabel(dataset)
     np_result = np.asarray(result)
-    nsamples = np_result.shape[0]*np_result.shape[1]
     np_result = np_result.reshape((nsamples,1))
     print("Result shape:")
     print(np_result.shape)
 
-    ids = ids[:nsamples]
+    print("Ids shape:")
+    print(ids.shape)
 
     final = np.hstack((ids,np_result))
 

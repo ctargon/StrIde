@@ -8,7 +8,7 @@ import os
 
 import matplotlib.pyplot as plt
 
-import tf_util
+from models import tf_util
 
 
 class PointNet:
@@ -273,21 +273,24 @@ class PointNet:
         saver.restore(sess, self.weights_file)
 
         results = []
+        #result_pl = tf.placeholder(tf.int, [N`]
         is_training = False
         total_test_batch = int(dataset.shape[0] / self.batch_size)
 
-        for i in range(total_test_batch):
+        for i in range(total_test_batch+1):
             batch_x = self.next_test_batch(dataset,self.batch_size,i)
             batch_x = self.rotate_point_cloud(batch_x)
-            results.append(pred_ndx.eval({pc_pl: batch_x,
+            results.extend(pred_ndx.eval({pc_pl: batch_x,
                                        is_training_pl: is_training},
                                        session=sess))
         sess.close()
         return results
 
     def next_test_batch(self,dataset, batch_size, index):
-	    idx = index * batch_size
-	    n_idx = index * batch_size + batch_size
-	    return dataset[idx:n_idx, :]
-
+        idx = index * batch_size
+        n_idx = index * batch_size + batch_size
+        if n_idx < dataset.shape[0]:
+	        return dataset[idx:n_idx, :]
+        else:
+            return dataset[idx: , :]
 
