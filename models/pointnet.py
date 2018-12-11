@@ -279,7 +279,6 @@ class PointNet:
 
         for i in range(total_test_batch+1):
             batch_x = self.next_test_batch(dataset,self.batch_size,i)
-            batch_x = self.rotate_point_cloud(batch_x)
             results.extend(pred_ndx.eval({pc_pl: batch_x,
                                        is_training_pl: is_training},
                                        session=sess))
