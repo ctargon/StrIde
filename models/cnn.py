@@ -192,6 +192,6 @@ class CNN:
 
         sess.close()
 
-        print accs
+        print(accs)
 
         return sum(accs) / float(len(accs))

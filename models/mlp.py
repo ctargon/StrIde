@@ -35,7 +35,7 @@ class MLP:
     def multilayer_perceptron(self, x, weights, biases):
 
         layer = x
-        for i in xrange(1, len(self.h_units) + 1):
+        for i in range(1, len(self.h_units) + 1):
             w = 'h' + str(i)
             b = 'b' + str(i)
 
@@ -65,7 +65,7 @@ class MLP:
 
         weights = {}
         biases = {}
-        for i in xrange(1, len(self.h_units) + 1):
+        for i in range(1, len(self.h_units) + 1):
             w = 'h' + str(i)
             b = 'b' + str(i)
             weights[w] = tf.get_variable(w, shape=[units[i - 1], units[i]], initializer=tf.contrib.layers.xavier_initializer())
