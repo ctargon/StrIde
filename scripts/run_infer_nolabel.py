@@ -46,7 +46,10 @@ if __name__ == '__main__':
 
     f = open("classification.out",'w')
     for i in range(len(final)):
-        f.write("{:10d}\t{:10d}\t{:4d}\n".format(int(final[i][0]),int(final[i][1]),int(final[i][2])))
+        # Type '0' is liquid -- don't write this to keep classification.out
+        # from being so large -- therefore unlabeled is assumed as liquid
+        if final[i][2] != 0:
+            f.write("{:10d}\t{:10d}\t{:4d}\n".format(int(final[i][0]),int(final[i][1]),int(final[i][2])))
     
     f.close()
 
