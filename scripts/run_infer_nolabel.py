@@ -17,6 +17,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run inference on specified dataset')
     parser.add_argument('--weights', help='folder containing network weights to use', type=str, required=True)
     parser.add_argument('--dataset', help='dataset to be used (numpy format)', type=str, required=True)
+    parser.add_argument('--nclass', help='number of classes', type=int, required=True)
 
     args = parser.parse_args()
 
@@ -31,7 +32,7 @@ if __name__ == '__main__':
     # Extract just atom/frids
     ids = d[:,0,:2]
 
-    pc = PointNet(n_points=npoints, weights_dir=args.weights)
+    pc = PointNet(n_points=npoints, n_classes=args.nclass, weights_dir=args.weights)
 
     result = pc.infer_nolabel(dataset)
     np_result = np.asarray(result)
