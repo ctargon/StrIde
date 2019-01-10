@@ -7,7 +7,7 @@ import argparse
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(BASE_DIR)
-sys.path.append(os.path.join(BASE_DIR, '../models'))
+sys.path.append(os.path.join(BASE_DIR, '../'))
 
 from models.pointnet import PointNet
 from utils.InferenceContainer import InferenceContainer as IC
@@ -28,7 +28,10 @@ if __name__ == '__main__':
 
 	ic = IC(data=d, labels=l)
 
-	pc = PointNet(n_points=ic.test.data.shape[1], weights_dir=args.weights)
+	pc = PointNet(n_points=ic.test.data.shape[1],
+                  n_classes=ic.test.labels.shape[-1],
+                  n_input=3,
+                  weights_dir=args.weights)
 
 	acc = pc.inference(ic)
 	print('inference accuracy: ' + str(acc))

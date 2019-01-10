@@ -26,8 +26,8 @@ def main():
     dirs = [d for d in os.listdir(INPUT_DIR) if os.path.isdir("%s/%s" % (INPUT_DIR, d))]
  
     # Get list of all classes
-    #classes = ['liquid','fcc','hcp','bcc']
-    classes = ['liq','ice-h','ice-c','ice-III','ice-V','ice-VI']
+    classes = ['liquid','fcc','hcp','bcc']
+    #classes = ['liq','ice-h','ice-c','ice-III','ice-V','ice-VI','sI','sII']
    
     # Get all files
     files = ["%s/crds-neigh.out" % d for d in dirs]

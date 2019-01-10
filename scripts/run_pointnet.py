@@ -14,6 +14,10 @@ import time
 sys.path.append(os.path.dirname(os.getcwd()))
 sys.path.append(os.getcwd())
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(BASE_DIR)
+sys.path.append(os.path.join(BASE_DIR, '../'))
+
 from models.mlp import MLP
 from models.cnn import CNN
 from models.pointnet import PointNet
@@ -82,7 +86,9 @@ if __name__ == '__main__':
 
 
 	print('train shape: ' + str(dc.train.data.shape))
+	print('label shape: ' + str(dc.train.labels.shape))
 	print('test shape: ' + str(dc.test.data.shape))
+	print('label shape: ' + str(dc.test.labels.shape))
 
 	acc = net.run(dc)
 
