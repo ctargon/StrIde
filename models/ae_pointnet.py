@@ -133,13 +133,12 @@ class PointNet_AE:
 		tf.reset_default_graph()
 
 		pc_pl = tf.placeholder(tf.float32, [self.batch_size, self.n_points, self.n_input])
-		y_pl = tf.placeholder(tf.float32, [None, self.n_classes])
 		is_training_pl = tf.placeholder(tf.bool, shape=())  
 
 		# Construct model
 		pred, end_points = self.pointnet_ae(pc_pl, is_training_pl)
 
-		loss, end_points = self.get_loss(pred, y_pl, end_points)
+		loss, end_points = self.get_loss(pred, pc_pl, end_points)
 
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 		
@@ -167,11 +166,10 @@ class PointNet_AE:
 			
 			# Loop over all batches
 			for i in range(total_batch):
-				batch_x, batch_y = dataset.train.next_batch(self.batch_size, i)
+				batch_x, _ = dataset.train.next_batch(self.batch_size, i)
 				batch_x = self.rotate_point_cloud(batch_x)
 
 				_, c = sess.run([optimizer, loss], feed_dict={pc_pl: batch_x, 
-															  y_pl: batch_y,
 															  is_training_pl: is_training})
 
 				# Compute average loss
