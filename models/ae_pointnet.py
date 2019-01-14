@@ -89,7 +89,7 @@ class PointNet_AE:
 		pred = tf.multiply(pred, mask)
 		dists_forward,_,dists_backward,_ = tf_nndistance.nn_distance(pred, label)
 		loss = tf.reduce_mean(dists_forward+dists_backward)
-		end_points['pcloss'] = 0
+		end_points['pcloss'] = loss
 		return loss*100, end_points
 
 
