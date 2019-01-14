@@ -11,6 +11,7 @@ data/
 
 # C extensions
 *.so
+*.o
 
 # Distribution / packaging
 .Python
