@@ -140,7 +140,7 @@ class PointNet_AE:
 		meta = tf.placeholder(tf.int32, [None])
 		mask = tf.sequence_mask(meta, maxlen=self.n_points, dtype=tf.float32)
 		mask = tf.expand_dims(mask, -1)
-		mask = tf.tile(mask, [1, 1, self.n_points])
+		mask = tf.tile(mask, [1, 1, self.n_input])
 
 		# Construct model
 		pred, end_points = self.pointnet_ae(pc_pl, is_training_pl)

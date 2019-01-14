@@ -18,7 +18,7 @@ class data_t(object):
 		idx = index * batch_size
 		n_idx = index * batch_size + batch_size
 		if metas:
-			return self.data[idx:n_idx, :], self.labels[idx:n_idx, :], self.metas[idx:n_idxs, :]
+			return self.data[idx:n_idx, :], self.labels[idx:n_idx, :], self.metas[idx:n_idx, :]
 		else:
 			return self.data[idx:n_idx, :], self.labels[idx:n_idx, :]
 
