@@ -83,9 +83,10 @@ class PointNet_AE:
 		return net, end_points
 
 
-	def get_loss(self, pred, label, end_points):
+	def get_loss(self, pred, label, mask, end_points):
 		""" pred: BxNx3,
 			label: BxNx3, """
+		pred = tf.multiply(pred, mask)
 		dists_forward,_,dists_backward,_ = tf_nndistance.nn_distance(pred, label)
 		loss = tf.reduce_mean(dists_forward+dists_backward)
 		end_points['pcloss'] = 0
@@ -135,10 +136,16 @@ class PointNet_AE:
 		pc_pl = tf.placeholder(tf.float32, [self.batch_size, self.n_points, self.n_input])
 		is_training_pl = tf.placeholder(tf.bool, shape=())  
 
+		# define placeholders for meta data (mask)
+		meta = tf.placeholder(tf.int32, [None])
+		mask = tf.sequence_mask(meta, maxlen=self.n_points, dtype=tf.float32)
+		mask = tf.expand_dims(mask, -1)
+		mask = tf.tile(mask, [1, 1, self.n_points])
+
 		# Construct model
 		pred, end_points = self.pointnet_ae(pc_pl, is_training_pl)
 
-		loss, end_points = self.get_loss(pred, pc_pl, end_points)
+		loss, end_points = self.get_loss(pred, pc_pl, mask, end_points)
 
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 		
@@ -170,6 +177,7 @@ class PointNet_AE:
 				batch_x = self.rotate_point_cloud(batch_x)
 
 				_, c = sess.run([optimizer, loss], feed_dict={pc_pl: batch_x, 
+															  meta: metas_x,
 															  is_training_pl: is_training})
 
 				# Compute average loss

@@ -46,7 +46,7 @@ if __name__ == '__main__':
 	print('converting to DataContainer format...')
 	dc = DC(data=data, labels=labels)
 
-	net = PointNet_AE(epochs=100,
+	net = PointNet_AE(epochs=40,
 				   batch_size=64,
 				   n_points=dc.train.data.shape[1],
 				   n_classes=dc.train.labels.shape[-1],
