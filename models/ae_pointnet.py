@@ -166,7 +166,7 @@ class PointNet_AE:
 			
 			# Loop over all batches
 			for i in range(total_batch):
-				batch_x, _ = dataset.train.next_batch(self.batch_size, i)
+				batch_x, _, metas_x = dataset.train.next_batch(self.batch_size, i, metas=True)
 				batch_x = self.rotate_point_cloud(batch_x)
 
 				_, c = sess.run([optimizer, loss], feed_dict={pc_pl: batch_x, 

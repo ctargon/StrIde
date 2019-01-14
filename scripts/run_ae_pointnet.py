@@ -63,5 +63,3 @@ if __name__ == '__main__':
 
 	net.run(dc)
 
-	print('final accuracy: ' + str(acc))
-
