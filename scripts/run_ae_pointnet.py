@@ -58,7 +58,7 @@ if __name__ == '__main__':
 					   save=1,
 	                   weights_dir=args.weights)
 	elif args.model == 'vae':
-		net = PointNet_AE(epochs=40,
+		net = PointNet_VAE(epochs=40,
 					   batch_size=64,
 					   latent_dim=64,
 					   n_points=dc.train.data.shape[1],
