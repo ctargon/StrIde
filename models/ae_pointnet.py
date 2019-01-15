@@ -72,6 +72,9 @@ class PointNet_AE:
 								 padding='VALID', scope='maxpool')
 
 		net = tf.reshape(global_feat, [batch_size, -1])
+		net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training, scope='latentfc1', bn_decay=bn_decay)
+		net = tf_util.fully_connected(net, 64, bn=True, is_training=is_training, scope='latentfc2', bn_decay=bn_decay)
+		net = tf_util.fully_connected(net, 2, bn=True, is_training=is_training, scope='latentfc3', bn_decay=bn_decay)
 		end_points['embedding'] = net
 		
 		# fully connected upsample
@@ -197,7 +200,35 @@ class PointNet_AE:
 		return
 
 
+	def inference(self, dataset):
+		tf.reset_default_graph()
 
+		pc_pl = tf.placeholder(tf.float32, [self.batch_size, self.n_points, self.n_input])
+		is_training_pl = tf.placeholder(tf.bool, shape=())
+
+		# Construct model
+		pred, end_points = self.pointnet_ae(pc_pl, is_training_pl)
+
+		# Load from weights file
+		saver = tf.train.Saver()
+		sess = tf.Session()
+		saver.restore(sess, self.weights_file)
+
+		is_training = False
+		total_test_batch = int(dataset.test.num_examples / self.batch_size)
+		for i in range(1):
+			batch_x, batch_y = dataset.test.next_batch(self.batch_size, i)
+			#batch_x = self.rotate_point_cloud(batch_x)
+			outs = sess.run(pred, {pc_pl: batch_x,
+									   is_training_pl: is_training})
+
+		sess.close()
+
+		# with open('real_data2.txt', 'w') as f:
+		# 	for i in range(real_data.shape[1]):
+		# 		f.write("{:5f}\t{:5f}\t{:5f}\n".format(real_data[3,i,0], real_data[3,i,1], real_data[3,i,2]))
+
+		return outs
 
 
 

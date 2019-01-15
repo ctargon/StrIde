@@ -86,8 +86,8 @@ class PointNet_VAE:
 		# fully connected upsample
 		net = tf_util.fully_connected(z, 1024, bn=True, is_training=is_training, scope='fc1', bn_decay=bn_decay)
 		net = tf_util.fully_connected(net, 1024, bn=True, is_training=is_training, scope='fc2', bn_decay=bn_decay)
-		net = tf_util.fully_connected(net, num_point*3, activation_fn=None, scope='fc3')
-		net = tf.reshape(net, (batch_size, num_point, 3))		
+		net = tf_util.fully_connected(net, self.n_points*3, activation_fn=None, scope='fc3')
+		net = tf.reshape(net, (self.batch_size, self.n_points, 3))		
 
 		return net
 
@@ -161,11 +161,11 @@ class PointNet_VAE:
 
 		q_z = self.reparameterize(q_mu, q_sigma)
 
-		x_logit = self.generator(q_z, is_training=is_training)
+		x_logit = self.generator(q_z, is_training=is_training_pl)
 
 		recon_loss = self.get_loss(x_logit, pc_pl, mask)
 		kl_loss = 0.5 * tf.reduce_sum(tf.exp(q_sigma) + tf.square(q_mu) - 1. - q_sigma, axis=1)
-		ELBO = tf.reduce_mean(recon_loss + kl)
+		ELBO = tf.reduce_mean(recon_loss + kl_loss)
 		loss = ELBO
 		
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
@@ -218,9 +218,19 @@ class PointNet_VAE:
 		return
 
 
+	def generate(self):
+		z = tf.placeholder(tf.float32, shape=[self.batch_size, self.latent_dim])
+		is_training_pl = tf.placeholder(tf.bool, shape=())  
 
+		x_logit = self.generator(z, is_training=is_training_pl)
 
+		saver = tf.train.Saver()
+		sess = tf.Session()
+		saver.restore(sess, self.weights_file)
 
+		xsamp = sess.run(x_logit, feed_dict={z: np.random.randn(self.batch_size, self.latent_dim),
+												is_training_pl: False})
 
+		sess.close()
 
-
+		return xsamp
