@@ -40,8 +40,9 @@ class PointNet:
         """ Classification PointNet, input is BxNx3, output Bxn where n is num classes """
         batch_size = point_cloud.get_shape()[0].value
         num_point = point_cloud.get_shape()[1].value
+
         input_image = tf.expand_dims(point_cloud, -1)
-        
+
         # Point functions (MLP implemented as conv2d)
         net = tf_util.conv2d(input_image, 64, [1,3],
                              padding='VALID', stride=[1,1],
@@ -136,8 +137,18 @@ class PointNet:
 
         return batch_data * rands
 
-    def random_scale_point_wise(self, batch_data):
+    def random_scale_point_wise(self, batch_data, metas):
         rands = np.random.normal(self.params[0], self.params[1], size=batch_data.shape)
+
+        # create a sequence mask for numpy so you don't add random noise to the padded values
+        row_vec = np.asarray(range(batch_data.shape[1]))
+        matrix = np.expand_dims(metas, -1)
+        mask = row_vec < matrix
+        mask = np.expand_dims(mask, -1)
+        mask = np.tile(mask, batch_data.shape[-1])
+        mask = mask.astype(np.int32)
+
+        rands = np.multiply(rands, mask)
 
         # add gaussian noise pointwise rather than multiplying
         return batch_data + rands
@@ -183,9 +194,10 @@ class PointNet:
             
             # Loop over all batches
             for i in range(total_batch):
-                batch_x, batch_y = dataset.train.next_batch(self.batch_size, i)
+                batch_x, batch_y, batch_m = dataset.train.next_batch(self.batch_size, i, metas=True)
                 batch_x = self.rotate_point_cloud(batch_x)
-                batch_x = self.random_scale_point_wise(batch_x)
+                #batch_x = self.random_scale_sample_wise(batch_x)
+                #batch_x = self.random_scale_point_wise(batch_x, batch_m)
                 _, c = sess.run([optimizer, loss], feed_dict={pc_pl: batch_x, 
                                                               y_pl: batch_y,
                                                               is_training_pl: is_training})
