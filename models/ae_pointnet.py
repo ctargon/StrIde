@@ -8,8 +8,8 @@ import os
 import matplotlib.pyplot as plt
 
 from models import tf_util
-from models import tf_nndistance
-
+from nn_distance import tf_nndistance
+from approxmatch import tf_approxmatch
 
 
 class PointNet_AE:
@@ -74,7 +74,7 @@ class PointNet_AE:
 		net = tf.reshape(global_feat, [batch_size, -1])
 		net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training, scope='latentfc1', bn_decay=bn_decay)
 		net = tf_util.fully_connected(net, 64, bn=True, is_training=is_training, scope='latentfc2', bn_decay=bn_decay)
-		net = tf_util.fully_connected(net, 2, bn=True, is_training=is_training, scope='latentfc3', bn_decay=bn_decay)
+		#net = tf_util.fully_connected(net, 3, bn=True, is_training=is_training, scope='latentfc3', bn_decay=bn_decay)
 		end_points['embedding'] = net
 		
 		# fully connected upsample
@@ -86,14 +86,19 @@ class PointNet_AE:
 		return net, end_points
 
 
-	def get_loss(self, pred, label, mask, end_points):
+	def get_loss(self, pred, label, mask):
 		""" pred: BxNx3,
 			label: BxNx3, """
 		pred = tf.multiply(pred, mask)
 		dists_forward,_,dists_backward,_ = tf_nndistance.nn_distance(pred, label)
 		loss = tf.reduce_mean(dists_forward+dists_backward)
-		end_points['pcloss'] = loss
-		return loss*100, end_points
+		return loss*100
+
+	def get_loss_emd(self, pred, label, mask):
+		pred = tf.multiply(pred, mask)
+		match = tf_approxmatch.approx_match(label, pred)
+		loss = tf.reduce_mean(tf_approxmatch.match_cost(label, pred, match))
+		return loss
 
 
 	# function take from https://github.com/charlesq34/pointnet/blob/master/provider.py
@@ -148,7 +153,8 @@ class PointNet_AE:
 		# Construct model
 		pred, end_points = self.pointnet_ae(pc_pl, is_training_pl)
 
-		loss, end_points = self.get_loss(pred, pc_pl, mask, end_points)
+		#loss = self.get_loss(pred, pc_pl, mask)
+		loss = self.get_loss_emd(pred, pc_pl, mask)
 
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 		

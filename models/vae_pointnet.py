@@ -8,7 +8,7 @@ import os
 import matplotlib.pyplot as plt
 
 from models import tf_util
-from models import tf_nndistance
+from nn_distance import tf_nndistance
 
 
 
