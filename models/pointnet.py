@@ -255,19 +255,34 @@ class PointNet:
         saver.restore(sess, self.weights_file)
 
         accs = []
+        cm_preds = []
         is_training = False
         total_test_batch = int(dataset.test.num_examples / self.batch_size)
         for i in range(total_test_batch):
             batch_x, batch_y = dataset.test.next_batch(self.batch_size, i)
             #batch_x = self.rotate_point_cloud(batch_x)
-            accs.append(accuracy.eval({pc_pl: batch_x,
-                                       y_pl: batch_y,
-                                       is_training_pl: is_training},
-                                       session=sess))
+            acc, p = sess.run([accuracy, pred], feed_dict={pc_pl: batch_x,
+                                                y_pl: batch_y,
+                                                is_training_pl: is_training})
+            accs.append(acc)
+            cm_preds.append(p)
+
+        # confusion matrix
+        cm_preds = np.vstack(cm_preds)
+        cm_labs = np.argmax(dataset.test.labels, axis=1)
+        self.confusion_matrix(cm_preds, cm_labs, sess)
 
         sess.close()
 
         return sum(accs) / float(len(accs))
+
+
+    def confusion_matrix(self, preds, labels, sess):
+        cm = tf.confusion_matrix(labels=labels, predictions=preds, num_classes=self.n_classes)
+        conf_mat = sess.run(cm)
+        print(conf_mat)
+
+
        
     def infer_nolabel(self, dataset):
 

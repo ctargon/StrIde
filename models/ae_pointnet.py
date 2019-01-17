@@ -37,7 +37,7 @@ class PointNet_AE:
 		os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 	# model definition for pointnet
-	def pointnet_ae(self, point_cloud, is_training, bn=True, bn_decay=None):
+	def encoder(self, point_cloud, is_training, bn=True, bn_decay=None):
 		""" Classification PointNet, input is BxNx3, output Bxn where n is num classes """
 		batch_size = point_cloud.get_shape()[0].value
 		num_point = point_cloud.get_shape()[1].value
@@ -75,15 +75,30 @@ class PointNet_AE:
 		net = tf_util.fully_connected(net, 256, bn=True, is_training=is_training, scope='latentfc1', bn_decay=bn_decay)
 		net = tf_util.fully_connected(net, 64, bn=True, is_training=is_training, scope='latentfc2', bn_decay=bn_decay)
 		#net = tf_util.fully_connected(net, 3, bn=True, is_training=is_training, scope='latentfc3', bn_decay=bn_decay)
-		end_points['embedding'] = net
-		
-		# fully connected upsample
-		net = tf_util.fully_connected(net, 1024, bn=True, is_training=is_training, scope='fc1', bn_decay=bn_decay)
-		net = tf_util.fully_connected(net, 1024, bn=True, is_training=is_training, scope='fc2', bn_decay=bn_decay)
-		net = tf_util.fully_connected(net, num_point*3, activation_fn=None, scope='fc3')
-		net = tf.reshape(net, (batch_size, num_point, 3))
+		latent = net
 
-		return net, end_points
+		return latent
+
+
+	def decoder_fc(self, latent, is_training, bn=True, bn_decay=None):
+		# fully connected upsample
+		net = tf_util.fully_connected(latent, 1024, bn=True, is_training=is_training, scope='fc1', bn_decay=bn_decay)
+		net = tf_util.fully_connected(net, 1024, bn=True, is_training=is_training, scope='fc2', bn_decay=bn_decay)
+		net = tf_util.fully_connected(net, self.n_points*3, activation_fn=None, scope='fc3')
+		net = tf.reshape(net, (self.batch_size, self.n_points, 3))
+
+		return net
+
+
+	def decoder_conv(self, latent, is_training, bn=True, bn_decay=None):
+		net = tf.reshape(latent, [self.batch_size, 1, 2, -1])
+		net = tf_util.conv2d_transpose(net, 512, kernel_size=[2,2], stride=[2,2], padding='VALID', scope='upconv1', bn=True, bn_decay=bn_decay, is_training=is_training)
+		net = tf_util.conv2d_transpose(net, 256, kernel_size=[3,3], stride=[1,1], padding='VALID', scope='upconv2', bn=True, bn_decay=bn_decay, is_training=is_training)
+		net = tf_util.conv2d_transpose(net, 3, kernel_size=[1,1], stride=[1,1], padding='VALID', scope='upconv5', activation_fn=None)
+		net = tf.reshape(net, [self.batch_size, -1, 3])
+
+		return net
+
 
 
 	def get_loss(self, pred, label, mask):
@@ -151,10 +166,12 @@ class PointNet_AE:
 		mask = tf.tile(mask, [1, 1, self.n_input])
 
 		# Construct model
-		pred, end_points = self.pointnet_ae(pc_pl, is_training_pl)
+		latent = self.encoder(pc_pl, is_training_pl)
+
+		recon = self.decoder_fc(latent, is_training_pl)
 
 		#loss = self.get_loss(pred, pc_pl, mask)
-		loss = self.get_loss_emd(pred, pc_pl, mask)
+		loss = self.get_loss_emd(recon, pc_pl, mask)
 
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 		
@@ -206,7 +223,7 @@ class PointNet_AE:
 		return
 
 
-	def inference(self, dataset):
+	def inference(self, dataset, write=False):
 		tf.reset_default_graph()
 
 		pc_pl = tf.placeholder(tf.float32, [self.batch_size, self.n_points, self.n_input])
@@ -230,9 +247,17 @@ class PointNet_AE:
 
 		sess.close()
 
-		# with open('real_data2.txt', 'w') as f:
-		# 	for i in range(real_data.shape[1]):
-		# 		f.write("{:5f}\t{:5f}\t{:5f}\n".format(real_data[3,i,0], real_data[3,i,1], real_data[3,i,2]))
+		if write:
+			real_data = dataset.test.data[:self.batch_size]
+			for j in range(real_data.shape[0]):
+				with open('real_data_' + str(j) + '.txt', 'w') as f:
+					for i in range(outs.shape[1]):
+						f.write("{:5f}\t{:5f}\t{:5f}\n".format(real_data[j,i,0], real_data[j,i,1], real_data[j,i,2]))
+
+			for j in range(outs.shape[0]):
+				with open('recon_data_' + str(j) + '.txt', 'w') as f:
+					for i in range(outs.shape[1]):
+						f.write("{:5f}\t{:5f}\t{:5f}\n".format(outs[j,i,0], outs[j,i,1], outs[j,i,2]))
 
 		return outs
 

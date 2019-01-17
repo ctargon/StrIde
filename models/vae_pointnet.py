@@ -82,14 +82,19 @@ class PointNet_VAE:
 		
 		return mu, sigma
 
-	def generator(self, z, is_training, bn=True, bn_decay=None):
+	def generator_fc(self, z, is_training, bn=True, bn_decay=None):
 		# fully connected upsample
-		net = tf_util.fully_connected(z, 1024, bn=True, is_training=is_training, scope='fc1', bn_decay=bn_decay)
-		net = tf_util.fully_connected(net, 1024, bn=True, is_training=is_training, scope='fc2', bn_decay=bn_decay)
-		net = tf_util.fully_connected(net, self.n_points*3, activation_fn=None, scope='fc3')
-		net = tf.reshape(net, (self.batch_size, self.n_points, 3))		
+		net = tf_util.fully_connected(z, 1024, bn=True, is_training=is_training, scope='g_fc1', bn_decay=bn_decay)
+		net = tf_util.fully_connected(net, 1024, bn=True, is_training=is_training, scope='g_fc2', bn_decay=bn_decay)
+		net = tf_util.fully_connected(net, self.n_points*3, activation_fn=None, scope='g_fc3')
+		net = tf.reshape(net, (self.batch_size, self.n_points, 3))
 
-		return net
+		# auxilary learning layers for predicting number of points in the PC that aren't padded
+		a_fc1 = tf_util.fully_connected(z, 256, bn=True, is_training=is_training, scope='g_aux_fc1', bn_decay=bn_decay)
+		a_fc2 = tf_util.fully_connected(z, 128, bn=True, is_training=is_training, scope='g_aux_fc2', bn_decay=bn_decay)
+		logits = tf_util.fully_connected(z, self.n_points, activation_fn=None, bn=True, is_training=is_training, scope='g_aux_fc3', bn_decay=bn_decay)
+
+		return net, logits
 
 
 	def reparameterize(self, mean, logvar):
@@ -148,25 +153,34 @@ class PointNet_VAE:
 		tf.reset_default_graph()
 
 		pc_pl = tf.placeholder(tf.float32, [self.batch_size, self.n_points, self.n_input])
+		meta = tf.placeholder(tf.int32, [None])
 		is_training_pl = tf.placeholder(tf.bool, shape=())  
 
-		# define placeholders for meta data (mask)
-		meta = tf.placeholder(tf.int32, [None])
-		mask = tf.sequence_mask(meta, maxlen=self.n_points, dtype=tf.float32)
-		mask = tf.expand_dims(mask, -1)
-		mask = tf.tile(mask, [1, 1, self.n_input])
+		learned_meta_labels = tf.one_hot(meta, self.n_points)
 
 		# Construct model
 		q_mu, q_sigma = self.encoder(pc_pl, self.latent_dim, is_training_pl)
 
 		q_z = self.reparameterize(q_mu, q_sigma)
 
-		x_logit = self.generator(q_z, is_training=is_training_pl)
+		x_logit, points_logit = self.generator_fc(q_z, is_training=is_training_pl)
+
+		############################################################################################
+		# losses and auxilary learning
+		# define placeholders for meta data (mask)
+		learned_meta = tf.argmax(points_logit, axis=1)
+		mask = tf.sequence_mask(learned_meta, maxlen=self.n_points, dtype=tf.float32)
+		mask = tf.expand_dims(mask, -1)
+		mask = tf.tile(mask, [1, 1, self.n_input])
+
+		points_pred_loss = tf.nn.softmax_cross_entropy_with_logits_v2(logits=points_logit, labels=learned_meta_labels)
+		points_loss = tf.reduce_mean(points_pred_loss)
 
 		recon_loss = self.get_loss(x_logit, pc_pl, mask)
-		kl_loss = 0.5 * tf.reduce_sum(tf.exp(q_sigma) + tf.square(q_mu) - 1. - q_sigma, axis=1)
-		ELBO = tf.reduce_mean(recon_loss + kl_loss)
-		loss = ELBO
+		kl_loss = tf.reduce_mean(0.5 * tf.reduce_sum(tf.exp(q_sigma) + tf.square(q_mu) - 1. - q_sigma, axis=1))
+		ELBO = recon_loss + kl_loss
+		
+		loss = ELBO + points_loss
 		
 		optimizer = tf.train.AdamOptimizer(learning_rate=self.lr).minimize(loss)
 		
@@ -189,6 +203,9 @@ class PointNet_VAE:
 		# Training cycle
 		for epoch in range(self.epochs):
 			avg_cost = 0.
+			avg_cost_pl = 0.
+			avg_cost_rl = 0.
+			avg_cost_kll = 0.
 			
 			dataset.shuffle()
 			
@@ -197,15 +214,22 @@ class PointNet_VAE:
 				batch_x, _, metas_x = dataset.train.next_batch(self.batch_size, i, metas=True)
 				batch_x = self.rotate_point_cloud(batch_x)
 
-				_, c = sess.run([optimizer, loss], feed_dict={pc_pl: batch_x, 
-															  meta: metas_x,
-															  is_training_pl: is_training})
+				_, c, pl, rl, kll = sess.run([optimizer, loss, points_loss, recon_loss, kl_loss], 
+								feed_dict={pc_pl: batch_x, 
+								  meta: metas_x,
+								  is_training_pl: is_training})
 
 				# Compute average loss
 				avg_cost += c / total_batch
+				avg_cost_pl += pl / total_batch
+				avg_cost_rl += rl / total_batch
+				avg_cost_kll += kll / total_batch
 
 			if self.verbose:
-				print("Epoch:", '%04d' % (epoch+1), "cost=", "{:.9f}".format(avg_cost))
+				print("Epoch:", '%04d' % (epoch+1), "cost=", "{:.5f}".format(avg_cost))
+				print("point prediction loss=", "{:.5f}".format(avg_cost_pl))
+				print("recon loss=", "{:.5f}".format(avg_cost_rl))
+				print("kl loss=", "{:.5f}".format(avg_cost_kll))
 
 			if epoch % 10 == 0 and self.save:
 				saver.save(sess, self.weights_file)
@@ -218,19 +242,33 @@ class PointNet_VAE:
 		return
 
 
-	def generate(self):
+	def generate(self, write=False):
 		z = tf.placeholder(tf.float32, shape=[self.batch_size, self.latent_dim])
 		is_training_pl = tf.placeholder(tf.bool, shape=())  
 
-		x_logit = self.generator(z, is_training=is_training_pl)
+		x_logit, points_logit = self.generator_fc(z, is_training=is_training_pl)
+
+		learned_meta = tf.argmax(points_logit, axis=1)
+		mask = tf.sequence_mask(learned_meta, maxlen=self.n_points, dtype=tf.float32)
+		mask = tf.expand_dims(mask, -1)
+		mask = tf.tile(mask, [1, 1, self.n_input])
+
+		pred = tf.multiply(x_logit, mask)
 
 		saver = tf.train.Saver()
 		sess = tf.Session()
 		saver.restore(sess, self.weights_file)
 
-		xsamp = sess.run(x_logit, feed_dict={z: np.random.randn(self.batch_size, self.latent_dim),
+		outs = sess.run(pred, feed_dict={z: np.random.randn(self.batch_size, self.latent_dim),
 												is_training_pl: False})
 
 		sess.close()
 
-		return xsamp
+		if write:
+			for j in range(outs.shape[0]):
+				with open('vae_w_mask' + str(j) + '.txt', 'w') as f:
+					for i in range(outs.shape[1]):
+						f.write("{:5f}\t{:5f}\t{:5f}\n".format(outs[j,i,0], outs[j,i,1], outs[j,i,2]))
+
+
+		return outs

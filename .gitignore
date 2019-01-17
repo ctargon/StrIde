@@ -11,6 +11,8 @@ data/
 weights/
 *data/
 
+*.gro
+
 # C extensions
 *.so
 *.o
