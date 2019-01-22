@@ -110,7 +110,7 @@ class PointNet_AE:
 		return loss*100
 
 	def get_loss_emd(self, pred, label, mask):
-		pred = tf.multiply(pred, mask)
+		#pred = tf.multiply(pred, mask)
 		match = tf_approxmatch.approx_match(label, pred)
 		loss = tf.reduce_mean(tf_approxmatch.match_cost(label, pred, match))
 		return loss
@@ -230,7 +230,8 @@ class PointNet_AE:
 		is_training_pl = tf.placeholder(tf.bool, shape=())
 
 		# Construct model
-		pred, end_points = self.pointnet_ae(pc_pl, is_training_pl)
+		latent = self.encoder(pc_pl, is_training_pl)
+		recon = self.decoder_fc(latent, is_training_pl)
 
 		# Load from weights file
 		saver = tf.train.Saver()
@@ -242,7 +243,7 @@ class PointNet_AE:
 		for i in range(1):
 			batch_x, batch_y = dataset.test.next_batch(self.batch_size, i)
 			#batch_x = self.rotate_point_cloud(batch_x)
-			outs = sess.run(pred, {pc_pl: batch_x,
+			outs = sess.run(recon, {pc_pl: batch_x,
 									   is_training_pl: is_training})
 
 		sess.close()

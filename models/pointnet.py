@@ -236,7 +236,7 @@ class PointNet:
         return sum(accs) / float(len(accs))
 
 
-    def inference(self, dataset):
+    def inference(self, dataset, conf_matrix=False):
         tf.reset_default_graph()
 
         pc_pl = tf.placeholder(tf.float32, [None, self.n_points, self.n_input])
@@ -268,9 +268,10 @@ class PointNet:
             cm_preds.append(p)
 
         # confusion matrix
-        cm_preds = np.vstack(cm_preds)
-        cm_labs = np.argmax(dataset.test.labels, axis=1)
-        self.confusion_matrix(cm_preds, cm_labs, sess)
+        if conf_matrix:
+            cm_preds = np.vstack(cm_preds)
+            cm_labs = np.argmax(dataset.test.labels, axis=1)
+            self.confusion_matrix(cm_preds, cm_labs, sess)
 
         sess.close()
 
