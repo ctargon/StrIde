@@ -256,6 +256,7 @@ class PointNet:
 
         accs = []
         cm_preds = []
+        cm_labels = []
         is_training = False
         total_test_batch = int(dataset.test.num_examples / self.batch_size)
         for i in range(total_test_batch):
@@ -266,11 +267,14 @@ class PointNet:
                                                 is_training_pl: is_training})
             accs.append(acc)
             cm_preds.append(p)
+            cm_labels.append(batch_y)
 
         # confusion matrix
         if conf_matrix:
             cm_preds = np.vstack(cm_preds)
-            cm_labs = np.argmax(dataset.test.labels, axis=1)
+            cm_preds = np.argmax(cm_preds, axis=1)
+            cm_labs = np.vstack(cm_labels)
+            cm_labs = np.argmax(cm_labs, axis=1)
             self.confusion_matrix(cm_preds, cm_labs, sess)
 
         sess.close()
