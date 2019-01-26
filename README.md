@@ -1,6 +1,6 @@
 # StrIde
 
-This repository is contains an application of a PointNet to identify crystal structures in molecular simulations. See original paper (https://arxiv.org/abs/1612.00593) and repository (https://github.com/charlesq34/pointnet).
+This repository contains an application of a PointNet to identify crystal structures in molecular simulations. See original paper (https://arxiv.org/abs/1612.00593) and repository (https://github.com/charlesq34/pointnet).
 
 ## Installation
 
