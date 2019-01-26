@@ -26,8 +26,7 @@ and two scripts to help read/format inputs:
 ## Special Compilations
 To compile approxmatch:
 ```
-/usr/local/cuda-9.0/bin/nvcc tf_approxmatch_g.cu -o tf_approxmatch_g.cu.o 
-                              -c -O2 -DGOOGLE_CUDA=1 -x cu -Xcompiler -fPIC
+/usr/local/cuda-9.0/bin/nvcc tf_approxmatch_g.cu -o tf_approxmatch_g.cu.o -c -O2 -DGOOGLE_CUDA=1 -x cu -Xcompiler -fPIC
 ```
 
 ```
