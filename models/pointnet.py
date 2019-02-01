@@ -311,7 +311,8 @@ class PointNet:
 
         for i in range(total_test_batch+1):
             batch_x = self.next_test_batch(dataset,self.batch_size,i)
-            results.extend(pred_ndx.eval({pc_pl: batch_x,
+            if batch_x is not None:
+                results.extend(pred_ndx.eval({pc_pl: batch_x,
                                        is_training_pl: is_training},
                                        session=sess))
         sess.close()
@@ -322,6 +323,8 @@ class PointNet:
         n_idx = index * batch_size + batch_size
         if n_idx < dataset.shape[0]:
 	        return dataset[idx:n_idx, :]
-        else:
+        elif idx < dataset.shape[0]:
             return dataset[idx: , :]
+        else:
+            return None
 
