@@ -123,7 +123,8 @@ class PointNet:
             # order matters bc matmult not commutative 
             overall_rot = np.dot(z_rot_mat,np.dot(y_rot_mat,x_rot_mat))
             # Transposes bc overall_rot operates on col. vec [[x,y,z]]
-            rotated_data[k,...] = np.dot(overall_rot,batch_data[k,...].T).T
+            rotated_pc = np.dot(overall_rot,batch_data[k,:,:3].T).T
+            rotated_data[k] = np.concatenate((rotated_pc, batch_data[k,:,3:]), axis=1)
 
         return rotated_data
 

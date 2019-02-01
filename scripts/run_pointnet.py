@@ -69,7 +69,7 @@ if __name__ == '__main__':
 					   batch_size=64,
 					   n_points=dc.train.data.shape[1],
 					   n_classes=dc.train.labels.shape[-1],
-					   n_input=3, 
+					   n_input=dc.train.data.shape[-1], 
 					   verbose=1,
 					   save=1,
 					   noise=args.noise,
