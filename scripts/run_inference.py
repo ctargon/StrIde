@@ -33,7 +33,7 @@ if __name__ == '__main__':
                   n_input=3,
                   weights_dir=args.weights)
 
-	acc = pc.inference(ic)
+	acc = pc.inference(ic,conf_matrix=True)
 	print('inference accuracy: ' + str(acc))
 
 
