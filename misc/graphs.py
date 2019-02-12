@@ -67,40 +67,40 @@ def error_graph(conf_mat, labels):
 	plt.show()
 
 
-# def error_graph_per_class(conf_mat, labels):
-# 	tot_error = []
-# 	totals = np.sum(conf_mat, axis=1)
-# 	for i in range(conf_mat.shape[0]):
-# 		# error will be in format [group, column, error]
-# 		error = []
-# 		for j in range(conf_mat.shape[1]):
-# 			if i == j:
-# 				error.append(0)
-# 			else:
-# 				error.append((conf_mat[i,j] / float(totals[i])) * 100.0)
-# 		tot_error.append(error)
+def error_graph_per_class(conf_mat, labels):
+	tot_error = []
+	totals = np.sum(conf_mat, axis=1)
+	for i in range(conf_mat.shape[0]):
+		# error will be in format [group, column, error]
+		error = []
+		for j in range(conf_mat.shape[1]):
+			if i == j:
+				error.append(0)
+			else:
+				error.append((conf_mat[i,j] / float(totals[i])) * 100.0)
+		tot_error.append(error)
 
-# 	minorLocator = AutoMinorLocator(5)
+	minorLocator = AutoMinorLocator(5)
 
-# 	# plt.style.use('seaborn-deep')
-# 	fig, ax = plt.subplots(figsize=(7,5))
+	# plt.style.use('seaborn-deep')
+	fig, ax = plt.subplots(figsize=(7,5))
 
-# 	prop_cycle = plt.rcParams['axes.prop_cycle']
-# 	colors = prop_cycle.by_key()['color']
+	prop_cycle = plt.rcParams['axes.prop_cycle']
+	colors = prop_cycle.by_key()['color']
 
-# 	ind = np.arange(len(error))
-# 	width = 0.35
-# 	colors = colors[:conf_mat.shape[0]]
+	ind = np.arange(len(error))
+	width = 0.35
+	colors = colors[:conf_mat.shape[0]]
 
-# 	p1 = ax.bar(ind, error, width, color=colors, tick_label=labels)
+	p1 = ax.bar(ind, error, width, color=colors, tick_label=labels)
 
-# 	ax.yaxis.set_minor_locator(minorLocator)
+	ax.yaxis.set_minor_locator(minorLocator)
 
-# 	ax.set_ylabel('Percent Error', fontsize=16)
-# 	ax.set_yticks(np.arange(0, ceil(max(error)), 0.5))
-# 	plt.legend(p1, labels)
+	ax.set_ylabel('Percent Error', fontsize=16)
+	ax.set_yticks(np.arange(0, ceil(max(error)), 0.5))
+	plt.legend(p1, labels)
 
-# 	plt.show()
+	plt.show()
 
 
 conf_mat = np.asarray([[119144, 60, 394, 427],
