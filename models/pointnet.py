@@ -231,8 +231,7 @@ class PointNet:
 			#batch_x = self.rotate_point_cloud(batch_x)
 			acc, p = sess.run([accuracy, pred], feed_dict={pc_pl: batch_x, 
 									   y_pl: batch_y,
-									   is_training_pl: is_training}, 
-									   session=sess)
+									   is_training_pl: is_training}) 
 			accs.append(acc)
 			cm_preds.append(p)
 			cm_labels.append(batch_y)			
